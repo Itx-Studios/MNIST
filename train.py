@@ -16,14 +16,17 @@ def ground_truth_vec(label):
 def vec_sub(v1, v2):
     for i in range(len(v1) - 1):
         v1[i] -= v2[i]
+    return v1
 
 def vec_mul(v1, v2):
     for i in range(len(v1) - 1):
         v1[i] *= v2[i]
+    return v1
 
 def vec_factor(v, x):
     for y in v:
         y *= x
+    return v
 
 def outer_p(v1, v2):
     return [[a * b for b in v2] for a in v1]
@@ -56,7 +59,7 @@ def back_propagation(input_layer, label):
 
     result = a[-1]
     error = MSE(result, label)
-    print(error)
+    print(f"Error: {error}")
 
     # Layer -1
     delta_4 = vec_mul(vec_factor(vec_sub(result, ground_truth_vec(label)), 2), relu_der(z[-1]))
