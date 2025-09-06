@@ -1,10 +1,16 @@
 from load import load_trainings_data
 from predict import feed_forward
+from network import nn
+import random
 
 def test():
+    nn.load_from_pickle("after.pickle")
+
     data_matrix = load_trainings_data()
 
     data_sets = [(row[0], row[1:]) for row in data_matrix]
+    random.shuffle(data_sets)
+    data_sets = data_sets[:1000]
     
     right_tries = 0
 

@@ -14,9 +14,9 @@ def training():
     print("Shuffled")
 
     print("Train")
-    for data_set in data_sets:
+    for i, data_set in enumerate(data_sets):
         y, X = data_set
-        print(f"Epach E, Label: {y}")
+        print(f"Epach E: {i}, Label: {y}")
         back_propagation(X, y)
     print("Trained")
 

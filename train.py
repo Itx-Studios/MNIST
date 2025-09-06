@@ -14,19 +14,13 @@ def ground_truth_vec(label):
     return [1 if i == label else 0 for i in range(10)]
 
 def vec_sub(v1, v2):
-    for i in range(len(v1) - 1):
-        v1[i] -= v2[i]
-    return v1
+    return [v1[i] - v2[i] for i in range(len(v1))]
 
 def vec_mul(v1, v2):
-    for i in range(len(v1) - 1):
-        v1[i] *= v2[i]
-    return v1
+    return [v1[i] * v2[i] for i in range(len(v1))]
 
 def vec_factor(v, x):
-    for y in v:
-        y *= x
-    return v
+    return [y * x for y in v]
 
 def outer_p(v1, v2):
     return [[a * b for b in v2] for a in v1]
@@ -61,41 +55,40 @@ def back_propagation(input_layer, label):
     error = MSE(result, label)
     print(f"Error: {error}")
 
-    # Layer -1
+    activations = [input_layer] + a
+
+    # Layer -1 (output layer)
     delta_4 = vec_mul(vec_factor(vec_sub(result, ground_truth_vec(label)), 2), relu_der(z[-1]))
 
-    grad_4 = outer_p(delta_4, T(a[-2]))
+    grad_4 = outer_p(delta_4, activations[-2])
     grad_bias_4 = delta_4
 
-    weigths = nn.get_weights(2)
-    nn.set_weights(2, update_w(weigths, grad_4))
+    weights = nn.get_weights(2)
+    nn.set_weights(2, update_w(weights, grad_4))
 
     biases = nn.get_biases(2)
     nn.set_biases(2, update_b(biases, grad_bias_4))
 
-
-    # Layer -2
+    # Layer -2 (second hidden layer)
     delta_3 = vec_mul(mm(T(nn.get_weights(2)), delta_4), relu_der(z[-2]))
 
-    grad_3 = outer_p(delta_3, T(a[-3]))
+    grad_3 = outer_p(delta_3, activations[-3])
     grad_bias_3 = delta_3
 
-    weigths = nn.get_weights(1)
-    nn.set_weights(1, update_w(weigths, grad_3))
+    weights = nn.get_weights(1)
+    nn.set_weights(1, update_w(weights, grad_3))
 
     biases = nn.get_biases(1)
     nn.set_biases(1, update_b(biases, grad_bias_3))
 
-    # Layer -3
-    delta_2 = vec_mul(mm(T(nn.get_weights(2)), delta_3), relu_der(z[-3]))
+    # Layer -3 (first hidden layer)
+    delta_2 = vec_mul(mm(T(nn.get_weights(1)), delta_3), relu_der(z[-3]))
 
-    grad_2 = outer_p(delta_2, T(a[-4]))
+    grad_2 = outer_p(delta_2, activations[-4])
     grad_bias_2 = delta_2
 
-    weigths = nn.get_weights(0)
-    nn.set_weights(0, update_w(weigths, grad_2))
+    weights = nn.get_weights(0)
+    nn.set_weights(0, update_w(weights, grad_2))
 
     biases = nn.get_biases(0)
     nn.set_biases(0, update_b(biases, grad_bias_2))
-
-
