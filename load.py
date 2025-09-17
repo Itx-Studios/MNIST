@@ -9,7 +9,8 @@ def load_trainings_data():
             path = os.path.join("mnist-png", "train", str(i), filename)
 
             img = Image.open(path).convert("L")
-            pixels = list(img.getdata())
+            # Normalize pixel intensities to [0, 1] to stabilize training
+            pixels = [p / 255.0 for p in list(img.getdata())]
 
             data_matrix.append([i, *pixels])
         

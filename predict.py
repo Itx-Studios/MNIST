@@ -41,5 +41,7 @@ def exec(input):
     return [x2, x3, x4], [z2, z3, z4]
 
 def feed_forward(input_layer):
-    out_y = soft_max(exec(input_layer)[0][-1])
+    # Use logits (z of last layer) for softmax; avoid ReLU before softmax
+    logits = exec(input_layer)[1][-1]
+    out_y = soft_max(logits)
     return out_y.index(max(out_y))

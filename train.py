@@ -1,14 +1,11 @@
-from predict import exec
+import math
+from predict import exec, soft_max
 from network import nn
 
-def MSE(result: list[int], label: int):
-    error = 0
-    for (i, item) in enumerate(result):
-        if i == label:
-            error += (item - 1) ** 2
-        elif i != label:
-            error += (item - 0) ** 2
-    return error / len(result)
+def cross_entropy(probs: list[float], label: int, eps: float = 1e-12):
+    # CE = -log(p_true)
+    p_true = max(min(probs[label], 1.0 - eps), eps)
+    return -math.log(p_true)
 
 def ground_truth_vec(label):
     return [1 if i == label else 0 for i in range(10)]
@@ -38,27 +35,29 @@ def mm(matrix, vector):
 def relu_der(z):
     return [1 if x > 0 else 0 for x in z]
 
-def update_w(weigths, gradients, learning_rate=0.01):
+def update_w(weigths, gradients, learning_rate=0.001):
     updated = []
     for w_row, g_row in zip(weigths, gradients):
         updated_row = [w - learning_rate * g for w, g in zip(w_row, g_row)]
         updated.append(updated_row)
     return updated
 
-def update_b(biases, gradients, learning_rate=0.01):
+def update_b(biases, gradients, learning_rate=0.001):
     return [b - learning_rate * g for b, g in zip(biases, gradients)]
 
 def back_propagation(input_layer, label):
     a, z = exec(input_layer)
 
-    result = a[-1]
-    error = MSE(result, label)
-    print(f"Error: {error}")
+    # Use logits for softmax at output
+    y_hat = soft_max(z[-1])
+    error = cross_entropy(y_hat, label)
+    print(f"Error (CE): {error}")
 
     activations = [input_layer] + a
 
     # Layer -1 (output layer)
-    delta_4 = vec_mul(vec_factor(vec_sub(result, ground_truth_vec(label)), 2), relu_der(z[-1]))
+    # For softmax + cross-entropy, delta = y_hat - y_true
+    delta_4 = vec_sub(y_hat, ground_truth_vec(label))
 
     grad_4 = outer_p(delta_4, activations[-2])
     grad_bias_4 = delta_4

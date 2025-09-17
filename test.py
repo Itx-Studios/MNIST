@@ -6,8 +6,10 @@ import random
 def test():
     nn.load_from_pickle("after.pickle")
 
+    print("Load Data-Matrix")
     data_matrix = load_trainings_data()
 
+    print("Shuffle and Split Data")
     data_sets = [(row[0], row[1:]) for row in data_matrix]
     random.shuffle(data_sets)
     data_sets = data_sets[:1000]
