@@ -4,6 +4,11 @@ from network import nn
 import random
 
 def training():
+    print("load pickle? Y/N")
+    if input() == "Y":
+        nn.load_from_pickle("after.pickle")
+    else:
+        pass
     print("Load")
     data_matrix = load_trainings_data()
     print("Loaded")
