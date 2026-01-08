@@ -1,22 +1,32 @@
+This project classifies handwritten digits (0-9) 
+
+
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/9409c21d-ad0d-413a-a351-006e9c76ca79" style="width:30%;max-width:250px" />
+  <img src="https://github.com/user-attachments/assets/7433cda6-e251-40bb-887a-631b17b1734a" style="width:30%;max-width:250px" />
+  <img src="" style="width:30%;max-width:250px" />
+</div>
+
 # ITX Numscan (MNIST)
 
-ITX Numscan is a small collection of MNIST digit classifiers and demo tools. It contains a custom dense neural network implementation (Numscan), a TensorFlow CNN implementation (Numscan 2), and a Discord bot for automated image predictions.
+ITX Numscan is a collection of MNIST digit classifiers and tools. It contains a self-written neural network (Numscan), a Convolutional neural network version using Tensorflow (Numscan 2), and a Discord bot for Numscan integration in Discord Servers. The Goal of the Project is to learn how neural networks operate and integrating it into Web or Discord.
 
 ## Purpose
 
-- Learn and compare a handcrafted dense network and a CNN on MNIST.
-- Provide simple training and testing scripts for both models.
-- Offer GUI tools and a Discord bot to run predictions on user-provided images.
+- To understand the Math behind neural networks
+- To provide a accurate classifier
+- To integrate digit classification in tools or elsewhere
 
 ## Project Structure
 
-- `Numscan/` - Custom dense network implementation with training/testing scripts and the local MNIST PNG dataset.
-- `Numscan 2/` - TensorFlow CNN model, training/evaluation script, and a GUI tester.
-- `Discord Bot/` - Discord bot that reads image uploads and responds with predictions.
-- `editor.py` - Desktop GUI to draw or load digits and predict with either model.
-- `requirements.txt` - Python dependencies for all tools.
+- `Numscan/` - Folder for the self-made neural network based classifier 
+- `Numscan 2/` - Folder for the newer, smarter classifier with Tensorflow 
+- `Discord Bot/` - Folder for Discord integration
+- `editor.py` - Desktop testing tool for single samples, either loaded or self-drawn
+- `requirements.txt` - All Python requirements
 
-### Install Requirements
+### Set up
 
 ```bash
 python -m venv .venv
@@ -24,56 +34,51 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-### Numscan (Dense Network)
+# 1. Numscan (Dense)
 
-Train the model (uses the PNG dataset in `Numscan/Data/mnist-png`):
+Train the model with the images in the `Data`:
 
 ```bash
 python "Numscan/Scripts/Train/training.py"
 ```
 
-Test the model after training:
+Test the models overall performance:
 
 ```bash
 python "Numscan/Scripts/Test/test.py"
 ```
 
-The trained weights are stored at `Numscan/Models/after.pickle`.
+Test the model yourself:
 
-### Numscan 2 (CNN)
+```bash
+python "editor.py"
+```
 
-Train or load the CNN model and evaluate it:
+# 2. Numscan 2 (CNN)
+
+Train a model with the samples of the MNIST Dataset or load an already exsisting one:
 
 ```bash
 python "Numscan 2/model.py"
 ```
 
-This script downloads MNIST automatically the first time and saves weights to `Numscan 2/Models/model.pkl`.
-
-Launch the GUI tester for drawing, demo samples, and uploads:
+Test the models performance:
 
 ```bash
 python "Numscan 2/test.py"
 ```
 
-### Editor GUI (Unified Tester)
-
-Use the desktop editor to draw or load digits and run predictions with Numscan or Numscan 2:
+Test the model yourself:
 
 ```bash
-python editor.py
+python "editor.py"
 ```
 
-Make sure the corresponding model files exist:
+# 3. Discord Bot
 
-- Numscan: `Numscan/Models/after.pickle`
-- Numscan 2: `Numscan 2/Models/model.pkl`
+The Discord Application reacts to uploaded images in the correct channel. The application needs join the server for it to work!
 
-### Discord Bot
-
-The bot listens in a configured channel, reads image attachments, and responds with predicted digits. It expects a Numscan-compatible pickle model.
-
-Create `Discord Bot/.env` with at least:
+Create `Discord Bot/.env` with Token, Channel name and Model path:
 
 ```
 DISCORD_BOT_TOKEN=your-token-here
