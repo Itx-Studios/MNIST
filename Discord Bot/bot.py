@@ -1,18 +1,30 @@
 ﻿import io
 import logging
 import os
+import sys
 from typing import List, Tuple
 
 import discord
 from dotenv import load_dotenv
 from PIL import Image, UnidentifiedImageError
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
+NUMSCAN_DIR = os.path.join(PROJECT_DIR, "Numscan")
+if NUMSCAN_DIR not in sys.path:
+    sys.path.insert(0, NUMSCAN_DIR)
+
 from network import nn
 import predict
 
 load_dotenv()
 
-MODEL_PATH = os.getenv("MNIST_MODEL_PATH", "after.pickle")
+ENV_MODEL_PATH = os.getenv("MNIST_MODEL_PATH")
+MODEL_CANDIDATES = [
+    ENV_MODEL_PATH,
+    os.path.join(NUMSCAN_DIR, "Models", "after.pickle"),
+    os.path.join(PROJECT_DIR, "Numscan 2", "Models", "model.pkl"),
+]
 TARGET_CHANNEL = os.getenv("MNIST_CHANNEL_NAME", "numscan")
 ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp")
 EXPECTED_SIZE = (28, 28)
@@ -28,6 +40,14 @@ def load_model(model_path: str) -> None:
         raise FileNotFoundError(f"Model file '{model_path}' not found.")
     nn.load_from_pickle(model_path)
     logging.info("Loaded model parameters from %s", model_path)
+
+
+def resolve_model_path(candidates: List[str]) -> str:
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return candidate
+    missing_list = ", ".join(path for path in candidates if path)
+    raise FileNotFoundError(f"Model file not found. Checked: {missing_list}")
 
 
 def preprocess_image(image: Image.Image) -> List[float]:
@@ -99,7 +119,10 @@ class NumscanClient(discord.Client):
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-    load_model(MODEL_PATH)
+    if ENV_MODEL_PATH and not os.path.exists(ENV_MODEL_PATH):
+        logging.warning("MNIST_MODEL_PATH is set but missing: %s", ENV_MODEL_PATH)
+    model_path = resolve_model_path(MODEL_CANDIDATES)
+    load_model(model_path)
     token = os.getenv("DISCORD_BOT_TOKEN")
     if not token:
         raise RuntimeError("Please set the DISCORD_BOT_TOKEN environment variable.")

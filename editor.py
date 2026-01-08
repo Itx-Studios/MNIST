@@ -1,9 +1,23 @@
+import importlib.util
 import os
 import random
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageTk, ImageOps
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+NUMSCAN_DIR = os.path.join(BASE_DIR, "Numscan")
+NUMSCAN2_DIR = os.path.join(BASE_DIR, "Numscan 2")
+if NUMSCAN_DIR not in sys.path:
+    sys.path.insert(0, NUMSCAN_DIR)
+
+DATA_DIR = os.path.join(NUMSCAN_DIR, "Data", "mnist-png")
+NUMSCAN1_MODEL_PATH = os.path.join(NUMSCAN_DIR, "Models", "after.pickle")
+NUMSCAN2_MODEL_PATH = os.path.join(NUMSCAN2_DIR, "Models", "model.pkl")
+NUMSCAN2_MODEL_MODULE = os.path.join(NUMSCAN2_DIR, "model.py")
 
 from predict import feed_forward, exec as nn_exec, soft_max
 from network import nn
@@ -17,13 +31,20 @@ STROKE_WIDTH = 18  # Drawing stroke width on the high-res canvas
 class EditorApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("MNIST Editor – Draw or Load and Predict")
+        self.root.title("MNIST Editor - Draw or Load Sample")
 
         # State
         self.prev_x = None
         self.prev_y = None
         self.bg_image_id = None
         self.tk_bg = None  # Keep reference to PhotoImage
+        self.model_choice_var = tk.StringVar(value="numscan1")
+        self.model_status_var = tk.StringVar(value="Model: not loaded")
+        self.numscan1_loaded = False
+        self.numscan1_path = None
+        self.numscan2_model = None
+        self.numscan2_path = None
+        self.numscan2_module = None
 
         # Off-screen PIL image where we keep the current drawing/content
         self.img_hi = Image.new("L", (CANVAS_SIZE, CANVAS_SIZE), color=0)  # black background
@@ -60,6 +81,30 @@ class EditorApp:
         self.auto_invert_var = tk.BooleanVar(value=True)
         tk.Checkbutton(ctrl, text="Auto invert colors", variable=self.auto_invert_var).pack(anchor="w")
 
+        model_frame = tk.LabelFrame(ctrl, text="Model")
+        model_frame.pack(fill=tk.X, pady=(8, 2))
+        tk.Radiobutton(
+            model_frame,
+            text="Numscan 1 (pickle)",
+            variable=self.model_choice_var,
+            value="numscan1",
+            command=self._on_model_choice_change,
+        ).pack(anchor="w")
+        tk.Radiobutton(
+            model_frame,
+            text="Numscan 2 (cnn)",
+            variable=self.model_choice_var,
+            value="numscan2",
+            command=self._on_model_choice_change,
+        ).pack(anchor="w")
+        tk.Label(
+            model_frame,
+            textvariable=self.model_status_var,
+            fg="#444",
+            justify=tk.LEFT,
+            wraplength=200,
+        ).pack(anchor="w", pady=(2, 0))
+
         # Buttons
         tk.Button(ctrl, text="Predict Drawing", command=self.predict).pack(fill=tk.X, pady=(8, 2))
         tk.Button(ctrl, text="Clear", command=self.clear_canvas).pack(fill=tk.X, pady=2)
@@ -76,6 +121,7 @@ class EditorApp:
             " - 'Auto invert colors' helps when images are black-on-white."
         )
         tk.Label(ctrl, text=info, justify=tk.LEFT, fg="#444").pack(anchor="w", pady=(8, 0))
+        self._update_model_status()
 
     # ---------- Drawing Handlers ----------
     def _on_mouse_down(self, event):
@@ -131,10 +177,10 @@ class EditorApp:
         self.result_var.set("Prediction: –")
 
     def load_random_demo(self):
-        # Try sampling from mnist-png/train/<digit>/...
-        base = os.path.join("mnist-png", "train")
+        # Try sampling from Numscan/Data/mnist-png/train/<digit>/...
+        base = os.path.join(DATA_DIR, "train")
         if not os.path.isdir(base):
-            messagebox.showinfo("Info", "Demo dataset not found at mnist-png/train. Use 'Load Image…' instead.")
+            messagebox.showinfo("Info", "Demo dataset not found at Numscan/Data/mnist-png/train. Use 'Load Image…' instead.")
             return
 
         # Collect all image paths
@@ -147,7 +193,7 @@ class EditorApp:
                         candidates.append(os.path.join(d_path, name))
 
         if not candidates:
-            messagebox.showinfo("Info", "No images found in mnist-png/train/*.")
+            messagebox.showinfo("Info", "No images found in Numscan/Data/mnist-png/train/*.")
             return
 
         path = random.choice(candidates)
@@ -155,6 +201,63 @@ class EditorApp:
             self._load_image(path)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load demo image:\n{e}")
+
+    # ---------- Model Selection ----------
+    def _on_model_choice_change(self):
+        self._update_model_status()
+
+    def _update_model_status(self):
+        choice = self.model_choice_var.get()
+        if choice == "numscan2":
+            if self.numscan2_model is not None:
+                name = os.path.basename(self.numscan2_path or NUMSCAN2_MODEL_PATH)
+                self.model_status_var.set(f"Model: Numscan 2 ({name})")
+            else:
+                self.model_status_var.set("Model: Numscan 2 (not loaded)")
+        else:
+            if self.numscan1_loaded:
+                name = os.path.basename(self.numscan1_path or NUMSCAN1_MODEL_PATH)
+                self.model_status_var.set(f"Model: Numscan 1 ({name})")
+            else:
+                self.model_status_var.set("Model: Numscan 1 (not loaded)")
+
+    def _get_numscan2_module(self):
+        if self.numscan2_module is not None:
+            return self.numscan2_module
+        if not os.path.exists(NUMSCAN2_MODEL_MODULE):
+            raise FileNotFoundError(f"Numscan 2 module not found at '{NUMSCAN2_MODEL_MODULE}'.")
+        spec = importlib.util.spec_from_file_location("numscan2_model", NUMSCAN2_MODEL_MODULE)
+        if spec is None or spec.loader is None:
+            raise ImportError("Failed to load Numscan 2 model module.")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.numscan2_module = module
+        return module
+
+    def _load_numscan1(self, path: str):
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Pickle file '{path}' does not exist.")
+        nn.load_from_pickle(path)
+        self.numscan1_loaded = True
+        self.numscan1_path = path
+        self._update_model_status()
+
+    def _load_numscan2(self, path: str):
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Pickle file '{path}' does not exist.")
+        module = self._get_numscan2_module()
+        self.numscan2_model = module.load_model_pickle(path)
+        self.numscan2_path = path
+        self._update_model_status()
+
+    def _ensure_model_loaded(self):
+        choice = self.model_choice_var.get()
+        if choice == "numscan2":
+            if self.numscan2_model is None:
+                self._load_numscan2(NUMSCAN2_MODEL_PATH)
+        else:
+            if not self.numscan1_loaded:
+                self._load_numscan1(NUMSCAN1_MODEL_PATH)
 
     # ---------- Prediction ----------
     def _prepare_input_vector(self) -> list:
@@ -172,11 +275,17 @@ class EditorApp:
 
     def predict(self):
         try:
+            self._ensure_model_loaded()
             X = self._prepare_input_vector()
-            # Get logits/probabilities for better feedback
-            _, z = nn_exec(X)
-            logits = z[-1]
-            probs = soft_max(logits)
+            choice = self.model_choice_var.get()
+            if choice == "numscan2":
+                batch = np.array(X, dtype="float32").reshape(1, GRID_SIZE, GRID_SIZE, 1)
+                probs = self.numscan2_model.predict(batch, verbose=0)[0].tolist()
+            else:
+                # Get logits/probabilities for better feedback
+                _, z = nn_exec(X)
+                logits = z[-1]
+                probs = soft_max(logits)
             pred = max(range(10), key=lambda i: probs[i])
 
             # Top-3 probabilities
@@ -188,11 +297,17 @@ class EditorApp:
 
     # ---------- Model Management ----------
     def load_model_dialog(self):
-        path = filedialog.askopenfilename(title="Open model pickle", filetypes=[("Pickle files", "*.pickle;*.pkl"), ("All files", "*.*")])
+        choice = self.model_choice_var.get()
+        title = "Open model weights"
+        filetypes = [("Pickle files", "*.pickle;*.pkl"), ("All files", "*.*")]
+        path = filedialog.askopenfilename(title=title, filetypes=filetypes)
         if not path:
             return
         try:
-            nn.load_from_pickle(path)
+            if choice == "numscan2":
+                self._load_numscan2(path)
+            else:
+                self._load_numscan1(path)
             messagebox.showinfo("Model Loaded", f"Loaded parameters from:\n{path}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load model:\n{e}")
