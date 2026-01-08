@@ -6,9 +6,15 @@ import os
 import sys
 
 fixed_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+script_path = os.path.join(fixed_path, "Scripts")
+test_path = os.path.join(script_path, "Test")
 
 if fixed_path not in sys.path:
     sys.path.insert(0, fixed_path)
+if script_path not in sys.path:
+    sys.path.insert(0, script_path)
+if test_path not in sys.path:
+    sys.path.insert(0, test_path)
 
 from predict import exec, soft_max
 from network import nn

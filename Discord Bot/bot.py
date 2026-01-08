@@ -14,11 +14,13 @@ from PIL import Image, UnidentifiedImageError
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 NUMSCAN_DIR = os.path.join(PROJECT_DIR, "Numscan")
+if PROJECT_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_DIR)
 if NUMSCAN_DIR not in sys.path:
     sys.path.insert(0, NUMSCAN_DIR)
 
 from network import nn
-import predict
+import Numscan.Scripts.Test.predict as predict
 
 DOTENV_CANDIDATES = [
     os.path.join(PROJECT_DIR, ".env"),
