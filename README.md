@@ -1,22 +1,12 @@
-<<<<<<< HEAD
 # ITX Numscan (MNIST)
-=======
-**ITX Numscan is a MNIST-Classificator for classifying handwritten digits**
->>>>>>> 1ed73da0b4134da9025a4aca107eb196193c39fe
 
 ITX Numscan is a small collection of MNIST digit classifiers and demo tools. It contains a custom dense neural network implementation (Numscan), a TensorFlow CNN implementation (Numscan 2), and a Discord bot for automated image predictions.
 
-<<<<<<< HEAD
 ## Purpose
 
 - Learn and compare a handcrafted dense network and a CNN on MNIST.
 - Provide simple training and testing scripts for both models.
 - Offer GUI tools and a Discord bot to run predictions on user-provided images.
-=======
-1. Numscan (Classifying digits with deep-learning networks, more technical and vanilla)
-
-2. Numscan 2 (Classifying digits with Convolutional neural networks, faster and with tensorflow)
->>>>>>> 1ed73da0b4134da9025a4aca107eb196193c39fe
 
 ## Project Structure
 
@@ -26,7 +16,6 @@ ITX Numscan is a small collection of MNIST digit classifiers and demo tools. It 
 - `editor.py` - Desktop GUI to draw or load digits and predict with either model.
 - `requirements.txt` - Python dependencies for all tools.
 
-<<<<<<< HEAD
 ### Install Requirements
 
 ```bash
@@ -97,24 +86,3 @@ Run the bot:
 ```bash
 python "Discord Bot/bot.py"
 ```
-=======
-**// 1 // Numscan**
-
-**How to use:**
-
-- editor.py to test the models performance on single samples
-- Scripts\Test\predict.py to test the models performance on all samples in Data
-- Scripts\Train\training.py to train a model
-
-**How it works:**
-
-**// 2 // Numscan 2**
-
-**How to use:**
-
-- editor.py to test the models performance on single samples
-- test.py to test the models performance on all samples
-- model.py to train a model
-
-**How it works:**
->>>>>>> 1ed73da0b4134da9025a4aca107eb196193c39fe

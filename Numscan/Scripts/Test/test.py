@@ -1,23 +1,28 @@
+
+# This file runs feed forward predictions for all samples and give evalution
+
 import os
 import random
 import sys
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SCRIPTS_DIR = os.path.join(ROOT_DIR, "Scripts")
-if SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, SCRIPTS_DIR)
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
+fixed_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+script_path = os.path.join(fixed_path, "Scripts")
+
+if script_path not in sys.path:
+    sys.path.insert(0, script_path)
+
+if fixed_path not in sys.path:
+    sys.path.insert(0, fixed_path)
 
 from load import load_trainings_data
 from predict import feed_forward
 from network import nn
 
-MODELS_DIR = os.path.join(ROOT_DIR, "Models")
-MODEL_PATH = os.path.join(MODELS_DIR, "after.pickle")
+model_dir = os.path.join(fixed_path, "Models")
+model_path = os.path.join(model_dir, "after.pickle")
 
 def test():
-    nn.load_from_pickle(MODEL_PATH)
+    nn.load_from_pickle(model_path)
 
     print("Load Data-Matrix")
     data_matrix = load_trainings_data()

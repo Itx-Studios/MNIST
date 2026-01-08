@@ -1,3 +1,6 @@
+
+# This file runs a single feed forward prediction
+
 import math, random
 from network import nn
 

@@ -1,25 +1,29 @@
+
+# This file runs back propergation for all samples in Data
+
 import os
 import random
 import sys
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SCRIPTS_DIR = os.path.join(ROOT_DIR, "Scripts")
-if SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, SCRIPTS_DIR)
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
+fixed_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+script_path = os.path.join(fixed_path, "Scripts")
+if script_path not in sys.path:
+    sys.path.insert(0, script_path)
+if fixed_path not in sys.path:
+    sys.path.insert(0, fixed_path
+)
 
 from train import back_propagation
 from load import load_trainings_data
 from network import nn
 
-MODELS_DIR = os.path.join(ROOT_DIR, "Models")
-MODEL_PATH = os.path.join(MODELS_DIR, "after.pickle")
+model_dir = os.path.join(fixed_path, "Models")
+model_path = os.path.join(model_dir, "after.pickle")
 
 def training():
     print("load pickle? Y/N")
     if input() == "Y":
-        nn.load_from_pickle(MODEL_PATH)
+        nn.load_from_pickle(model_path)
     else:
         pass
     print("Load")
@@ -39,7 +43,7 @@ def training():
     print("Trained")
 
     print("Save")
-    nn.save_to_pickle(MODEL_PATH)
+    nn.save_to_pickle(model_path)
     print("Saved")
 
 training()

@@ -1,11 +1,14 @@
-﻿import io
+﻿
+# This file runs a script for a discord application
+
+import io
 import logging
 import os
 import sys
 from typing import List, Tuple
 
 import discord
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 from PIL import Image, UnidentifiedImageError
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +20,24 @@ if NUMSCAN_DIR not in sys.path:
 from network import nn
 import predict
 
-load_dotenv()
+DOTENV_CANDIDATES = [
+    os.path.join(PROJECT_DIR, ".env"),
+    os.path.join(BASE_DIR, ".env"),
+]
+
+
+def load_env_file(dotenv_path: str) -> None:
+    with open(dotenv_path, "r", encoding="utf-8-sig") as handle:
+        values = dotenv_values(stream=handle)
+    for key, value in values.items():
+        if value is None:
+            continue
+        os.environ[key] = value
+
+
+for dotenv_path in DOTENV_CANDIDATES:
+    if os.path.exists(dotenv_path):
+        load_env_file(dotenv_path)
 
 ENV_MODEL_PATH = os.getenv("MNIST_MODEL_PATH")
 MODEL_CANDIDATES = [

@@ -1,3 +1,6 @@
+
+# This file used to be the editor for Numscan 2, use editor.py instead
+
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -17,7 +20,7 @@ RESAMPLE_NEAREST = RESAMPLING.NEAREST if RESAMPLING else Image.NEAREST
 class DigitTester(tk.Tk):
     def __init__(self, model):
         super().__init__()
-        self.title("MNIST Digit Tester")
+        self.title("Numscan 2 editor")
         self.resizable(False, False)
 
         self.model = model
@@ -180,7 +183,7 @@ class DigitTester(tk.Tk):
         )
         self.demo_photo = ImageTk.PhotoImage(image)
         self.demo_panel.configure(image=self.demo_photo)
-        self.demo_prediction_var.set("Demo prediction: –")
+        self.demo_prediction_var.set("Demo prediction: -")
 
     def predict_array(self, array):
         array = np.asarray(array, dtype=np.float32)

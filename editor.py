@@ -1,3 +1,6 @@
+
+# This file is the main editor for both numscan models 
+
 import importlib.util
 import os
 import random
@@ -8,36 +11,33 @@ from tkinter import filedialog, messagebox
 import numpy as np
 from PIL import Image, ImageDraw, ImageTk, ImageOps
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-NUMSCAN_DIR = os.path.join(BASE_DIR, "Numscan")
-NUMSCAN2_DIR = os.path.join(BASE_DIR, "Numscan 2")
-if NUMSCAN_DIR not in sys.path:
-    sys.path.insert(0, NUMSCAN_DIR)
+base_dir = os.path.dirname(os.path.abspath(__file__))
+numscan_dir = os.path.join(base_dir, "Numscan")
+numscan2_dir = os.path.join(base_dir, "Numscan 2")
+if numscan_dir not in sys.path:
+    sys.path.insert(0, numscan_dir)
 
-DATA_DIR = os.path.join(NUMSCAN_DIR, "Data", "mnist-png")
-NUMSCAN1_MODEL_PATH = os.path.join(NUMSCAN_DIR, "Models", "after.pickle")
-NUMSCAN2_MODEL_PATH = os.path.join(NUMSCAN2_DIR, "Models", "model.pkl")
-NUMSCAN2_MODEL_MODULE = os.path.join(NUMSCAN2_DIR, "model.py")
+data_dir = os.path.join(numscan_dir, "Data", "mnist-png")
+numscan_model_path = os.path.join(numscan_dir, "Models", "after.pickle")
+numscan2_model_path = os.path.join(numscan2_dir, "Models", "model.pkl")
+numscan2_model_module = os.path.join(numscan2_dir, "model.py")
 
 from predict import feed_forward, exec as nn_exec, soft_max
 from network import nn
 
-
-CANVAS_SIZE = 280  # Displayed drawing area (pixels)
-GRID_SIZE = 28     # Model input size (MNIST)
-STROKE_WIDTH = 18  # Drawing stroke width on the high-res canvas
-
+CANVAS_SIZE = 280
+GRID_SIZE = 28 
+STROKE_WIDTH = 18
 
 class EditorApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("MNIST Editor - Draw or Load Sample")
 
-        # State
         self.prev_x = None
         self.prev_y = None
         self.bg_image_id = None
-        self.tk_bg = None  # Keep reference to PhotoImage
+        self.tk_bg = None 
         self.model_choice_var = tk.StringVar(value="numscan1")
         self.model_status_var = tk.StringVar(value="Model: not loaded")
         self.numscan1_loaded = False
@@ -46,57 +46,53 @@ class EditorApp:
         self.numscan2_path = None
         self.numscan2_module = None
 
-        # Off-screen PIL image where we keep the current drawing/content
-        self.img_hi = Image.new("L", (CANVAS_SIZE, CANVAS_SIZE), color=0)  # black background
+        self.img_hi = Image.new("L", (CANVAS_SIZE, CANVAS_SIZE), color=0)
         self.draw_hi = ImageDraw.Draw(self.img_hi)
 
-        # UI Layout
         self._build_ui()
 
     def _build_ui(self):
         main = tk.Frame(self.root)
         main.pack(fill=tk.BOTH, expand=True)
 
-        # Left: Canvas
         canvas_frame = tk.Frame(main)
         canvas_frame.pack(side=tk.LEFT, padx=8, pady=8)
 
         self.canvas = tk.Canvas(canvas_frame, width=CANVAS_SIZE, height=CANVAS_SIZE, bg="black", highlightthickness=1, highlightbackground="#888")
         self.canvas.pack()
 
-        # Bind drawing events
         self.canvas.bind("<ButtonPress-1>", self._on_mouse_down)
         self.canvas.bind("<B1-Motion>", self._on_mouse_move)
         self.canvas.bind("<ButtonRelease-1>", self._on_mouse_up)
 
-        # Right: Controls
         ctrl = tk.Frame(main)
         ctrl.pack(side=tk.LEFT, fill=tk.Y, padx=8, pady=8)
 
-        # Prediction result
-        self.result_var = tk.StringVar(value="Prediction: –")
+        self.result_var = tk.StringVar(value="Prediction: -")
         tk.Label(ctrl, textvariable=self.result_var, font=("Segoe UI", 14, "bold")).pack(anchor="w", pady=(0, 8))
 
-        # Options
         self.auto_invert_var = tk.BooleanVar(value=True)
         tk.Checkbutton(ctrl, text="Auto invert colors", variable=self.auto_invert_var).pack(anchor="w")
 
         model_frame = tk.LabelFrame(ctrl, text="Model")
         model_frame.pack(fill=tk.X, pady=(8, 2))
+
         tk.Radiobutton(
             model_frame,
-            text="Numscan 1 (pickle)",
+            text="Numscan (.pickle)",
             variable=self.model_choice_var,
             value="numscan1",
             command=self._on_model_choice_change,
         ).pack(anchor="w")
+
         tk.Radiobutton(
             model_frame,
-            text="Numscan 2 (cnn)",
+            text="Numscan 2 (.pkl)",
             variable=self.model_choice_var,
             value="numscan2",
             command=self._on_model_choice_change,
         ).pack(anchor="w")
+
         tk.Label(
             model_frame,
             textvariable=self.model_status_var,
@@ -105,14 +101,12 @@ class EditorApp:
             wraplength=200,
         ).pack(anchor="w", pady=(2, 0))
 
-        # Buttons
         tk.Button(ctrl, text="Predict Drawing", command=self.predict).pack(fill=tk.X, pady=(8, 2))
         tk.Button(ctrl, text="Clear", command=self.clear_canvas).pack(fill=tk.X, pady=2)
         tk.Button(ctrl, text="Load Image…", command=self.load_image_dialog).pack(fill=tk.X, pady=(8, 2))
         tk.Button(ctrl, text="Random Demo", command=self.load_random_demo).pack(fill=tk.X, pady=2)
         tk.Button(ctrl, text="Load Model…", command=self.load_model_dialog).pack(fill=tk.X, pady=(8, 2))
 
-        # Info
         info = (
             "How to use:\n"
             " - Draw a digit with the mouse (white on black).\n"
@@ -123,7 +117,6 @@ class EditorApp:
         tk.Label(ctrl, text=info, justify=tk.LEFT, fg="#444").pack(anchor="w", pady=(8, 0))
         self._update_model_status()
 
-    # ---------- Drawing Handlers ----------
     def _on_mouse_down(self, event):
         self.prev_x, self.prev_y = event.x, event.y
 
@@ -131,27 +124,26 @@ class EditorApp:
         if self.prev_x is None or self.prev_y is None:
             return
         x, y = event.x, event.y
-        # Draw on the visible canvas
+
         self.canvas.create_line(self.prev_x, self.prev_y, x, y, fill="white", width=STROKE_WIDTH, capstyle=tk.ROUND, smooth=True)
-        # Draw on the off-screen PIL image
+
         self.draw_hi.line([(self.prev_x, self.prev_y), (x, y)], fill=255, width=STROKE_WIDTH)
         self.prev_x, self.prev_y = x, y
 
     def _on_mouse_up(self, _event):
         self.prev_x, self.prev_y = None, None
 
-    # ---------- Canvas and Images ----------
     def clear_canvas(self):
         self.canvas.delete("all")
         self.img_hi = Image.new("L", (CANVAS_SIZE, CANVAS_SIZE), color=0)
         self.draw_hi = ImageDraw.Draw(self.img_hi)
         self.tk_bg = None
         self.bg_image_id = None
-        self.result_var.set("Prediction: –")
+        self.result_var.set("Prediction: -")
 
     def _set_canvas_background_from_pil(self):
-        # Place the PIL image as a background on the canvas
         self.tk_bg = ImageTk.PhotoImage(self.img_hi.convert("RGB"))
+
         if self.bg_image_id is None:
             self.bg_image_id = self.canvas.create_image(0, 0, image=self.tk_bg, anchor=tk.NW)
         else:
@@ -168,22 +160,20 @@ class EditorApp:
 
     def _load_image(self, path: str):
         img = Image.open(path).convert("L")
-        # Resize for display/drawing canvas
         img = img.resize((CANVAS_SIZE, CANVAS_SIZE), Image.LANCZOS)
+
         self.img_hi = img
         self.draw_hi = ImageDraw.Draw(self.img_hi)
         self.canvas.delete("all")
         self._set_canvas_background_from_pil()
-        self.result_var.set("Prediction: –")
+        self.result_var.set("Prediction: -")
 
     def load_random_demo(self):
-        # Try sampling from Numscan/Data/mnist-png/train/<digit>/...
-        base = os.path.join(DATA_DIR, "train")
+        base = os.path.join(data_dir, "train")
         if not os.path.isdir(base):
             messagebox.showinfo("Info", "Demo dataset not found at Numscan/Data/mnist-png/train. Use 'Load Image…' instead.")
             return
 
-        # Collect all image paths
         candidates = []
         for d in range(10):
             d_path = os.path.join(base, str(d))
@@ -199,10 +189,10 @@ class EditorApp:
         path = random.choice(candidates)
         try:
             self._load_image(path)
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load demo image:\n{e}")
 
-    # ---------- Model Selection ----------
     def _on_model_choice_change(self):
         self._update_model_status()
 
@@ -210,13 +200,14 @@ class EditorApp:
         choice = self.model_choice_var.get()
         if choice == "numscan2":
             if self.numscan2_model is not None:
-                name = os.path.basename(self.numscan2_path or NUMSCAN2_MODEL_PATH)
+                name = os.path.basename(self.numscan2_path or numscan2_model_path)
                 self.model_status_var.set(f"Model: Numscan 2 ({name})")
             else:
                 self.model_status_var.set("Model: Numscan 2 (not loaded)")
+
         else:
             if self.numscan1_loaded:
-                name = os.path.basename(self.numscan1_path or NUMSCAN1_MODEL_PATH)
+                name = os.path.basename(self.numscan1_path or numscan_model_path)
                 self.model_status_var.set(f"Model: Numscan 1 ({name})")
             else:
                 self.model_status_var.set("Model: Numscan 1 (not loaded)")
@@ -224,11 +215,14 @@ class EditorApp:
     def _get_numscan2_module(self):
         if self.numscan2_module is not None:
             return self.numscan2_module
-        if not os.path.exists(NUMSCAN2_MODEL_MODULE):
-            raise FileNotFoundError(f"Numscan 2 module not found at '{NUMSCAN2_MODEL_MODULE}'.")
-        spec = importlib.util.spec_from_file_location("numscan2_model", NUMSCAN2_MODEL_MODULE)
+        if not os.path.exists(numscan2_model_module):
+            raise FileNotFoundError(f"Numscan 2 module not found at '{numscan2_model_module}'.")
+        
+        spec = importlib.util.spec_from_file_location("numscan2_model", numscan2_model_module)
+
         if spec is None or spec.loader is None:
             raise ImportError("Failed to load Numscan 2 model module.")
+        
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         self.numscan2_module = module
@@ -238,6 +232,7 @@ class EditorApp:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Pickle file '{path}' does not exist.")
         nn.load_from_pickle(path)
+
         self.numscan1_loaded = True
         self.numscan1_path = path
         self._update_model_status()
@@ -245,6 +240,7 @@ class EditorApp:
     def _load_numscan2(self, path: str):
         if not os.path.exists(path):
             raise FileNotFoundError(f"Pickle file '{path}' does not exist.")
+        
         module = self._get_numscan2_module()
         self.numscan2_model = module.load_model_pickle(path)
         self.numscan2_path = path
@@ -254,22 +250,19 @@ class EditorApp:
         choice = self.model_choice_var.get()
         if choice == "numscan2":
             if self.numscan2_model is None:
-                self._load_numscan2(NUMSCAN2_MODEL_PATH)
+                self._load_numscan2(numscan2_model_path)
+
         else:
             if not self.numscan1_loaded:
-                self._load_numscan1(NUMSCAN1_MODEL_PATH)
+                self._load_numscan1(numscan_model_path)
 
-    # ---------- Prediction ----------
     def _prepare_input_vector(self) -> list:
-        # Downscale high-res canvas image to 28x28 for the model
         small = self.img_hi.resize((GRID_SIZE, GRID_SIZE), Image.LANCZOS)
-        # Auto-invert if enabled and image seems black-on-white
         if self.auto_invert_var.get():
-            # Compute mean to infer polarity (white background -> high mean)
             mean_val = sum(small.getdata()) / (GRID_SIZE * GRID_SIZE * 255.0)
             if mean_val > 0.5:
                 small = ImageOps.invert(small)
-        # Normalize to [0, 1]
+                
         pixels = [p / 255.0 for p in small.getdata()]
         return pixels
 
@@ -281,21 +274,20 @@ class EditorApp:
             if choice == "numscan2":
                 batch = np.array(X, dtype="float32").reshape(1, GRID_SIZE, GRID_SIZE, 1)
                 probs = self.numscan2_model.predict(batch, verbose=0)[0].tolist()
+
             else:
-                # Get logits/probabilities for better feedback
                 _, z = nn_exec(X)
                 logits = z[-1]
                 probs = soft_max(logits)
             pred = max(range(10), key=lambda i: probs[i])
 
-            # Top-3 probabilities
             top3 = sorted(((i, p) for i, p in enumerate(probs)), key=lambda t: t[1], reverse=True)[:3]
             top3_txt = ", ".join(f"{i}:{p:.2f}" for i, p in top3)
             self.result_var.set(f"Prediction: {pred}  (Top-3: {top3_txt})")
+
         except Exception as e:
             messagebox.showerror("Error", f"Prediction failed:\n{e}")
 
-    # ---------- Model Management ----------
     def load_model_dialog(self):
         choice = self.model_choice_var.get()
         title = "Open model weights"

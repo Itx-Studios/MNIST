@@ -1,3 +1,6 @@
+
+# This file uses the Tensorflow library to train a Convolutional Neural Network model
+
 import os
 import pickle
 
@@ -6,15 +9,14 @@ from tensorflow.keras import datasets, layers, models
 
 MODEL_PATH = "Numscan 2\Models\model.pkl"
 
-
+# Data stuff
 def load_mnist_data():
-    """Load MNIST and return normalized tensors ready for the CNN."""
     (x_train, y_train), (x_test, y_test) = datasets.mnist.load_data()
     x_train = x_train.reshape((x_train.shape[0], 28, 28, 1)).astype("float32") / 255.0
     x_test = x_test.reshape((x_test.shape[0], 28, 28, 1)).astype("float32") / 255.0
     return (x_train, y_train), (x_test, y_test)
 
-
+# Model stuff
 def build_model():
     model = models.Sequential(
         [
@@ -34,23 +36,23 @@ def build_model():
     )
     return model
 
-
+# Save / Load model 
 def save_model_pickle(model, path=MODEL_PATH):
-    """Persist only the model weights because Keras models are not pickle safe."""
     with open(path, "wb") as handle:
         pickle.dump(model.get_weights(), handle)
-
 
 def load_model_pickle(path=MODEL_PATH):
     if not os.path.exists(path):
         raise FileNotFoundError(f"Pickle file '{path}' does not exist.")
+    
     model = build_model()
     with open(path, "rb") as handle:
         weights = pickle.load(handle)
+        
     model.set_weights(weights)
     return model
 
-
+# Main loop
 if __name__ == "__main__":
     (x_train, y_train), (x_test, y_test) = load_mnist_data()
 
