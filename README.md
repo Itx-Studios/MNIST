@@ -38,6 +38,8 @@ python -m pip install -r requirements.txt
 
 # 1. Numscan (Dense)
 
+You need to put the MNIST Pngs into the Data Folder first!
+
 Train the model with the images in the `Data`:
 
 ```bash
