@@ -1,5 +1,5 @@
 
-# This file opens an editor for predicting drawn, loaded or random images using both numscan 1 and 2
+# This file opens an editor for predicting drawn, loaded or random images using both numscan 1 and 2   !!! numscan 2 might take some while to load !!!
 
 import importlib.util
 import os

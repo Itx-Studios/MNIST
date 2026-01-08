@@ -10,7 +10,9 @@ This project classifies handwritten digits (0-9)
 
 # ITX Numscan (MNIST)
 
-ITX Numscan is a collection of MNIST digit classifiers and tools. It contains a self-written neural network (Numscan), a Convolutional neural network version using Tensorflow (Numscan 2), and a Discord bot for Numscan integration in Discord Servers. The Goal of the Project is to learn how neural networks operate and integrating it into Web or Discord.
+ITX Numscan is a collection of MNIST digit classifiers and tools. It contains a self-written neural network (Numscan) mostly for educational purpose, a Convolutional neural network version using Tensorflow (Numscan 2), and a Discord bot for Numscan integration in Discord Servers. The Goal of the Project is to learn how neural networks operate and integrating it into Web or Discord.
+
+
 
 ## Purpose
 

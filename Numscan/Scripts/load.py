@@ -9,6 +9,12 @@ data_dir = os.path.join(fixed_path, "Data", "mnist-png")
 
 def load_trainings_data():
     data_matrix = []
+    total = 0
+    for i in range(10):
+        total += len(os.listdir(os.path.join(data_dir, "train", str(i))))
+    loaded = 0
+    if total:
+        print(f"Loading {total} images...")
 
     for i in range(10):
 
@@ -19,5 +25,8 @@ def load_trainings_data():
             pixels = [p / 255.0 for p in list(img.getdata())]
 
             data_matrix.append([i, *pixels])
+            loaded += 1
+            if loaded % 1000 == 0 or loaded == total:
+                print(f"Loaded {loaded}/{total}")
         
     return data_matrix
