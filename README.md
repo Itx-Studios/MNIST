@@ -1,11 +1,11 @@
 This project classifies handwritten digits (0-9) 
 
 
-
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/9409c21d-ad0d-413a-a351-006e9c76ca79" style="width:30%;max-width:250px" />
-  <img src="https://github.com/user-attachments/assets/7433cda6-e251-40bb-887a-631b17b1734a" style="width:30%;max-width:250px" />
-  <img src="" style="width:30%;max-width:250px" />
+  <img src="https://github.com/user-attachments/assets/9409c21d-ad0d-413a-a351-006e9c76ca79" style="width:20%;max-width:250px" />
+  <img src="https://github.com/user-attachments/assets/7433cda6-e251-40bb-887a-631b17b1734a" style="width:20%;max-width:250px" />
+  <img src="https://github.com/user-attachments/assets/c9bcf798-de87-4402-b117-459298307bb8" style="width:20%;max-width:250px" />
+  <img src="https://github.com/user-attachments/assets/9f6cfc45-7ccc-4c36-80a1-b437ba23e65e" style="width:20%;max-width:250px" />
 </div>
 
 # ITX Numscan (MNIST)
@@ -37,6 +37,8 @@ python -m pip install -r requirements.txt
 ```
 
 # 1. Numscan (Dense)
+
+You need to put the MNIST Pngs into the Data Folder first!
 
 Train the model with the images in the `Data`:
 
